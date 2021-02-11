@@ -835,7 +835,7 @@ VOID PrintUsage( VOID )
   printf("            -n show                ShowWindow parameter \"nCmdShow\"\n");
   printf("            -b verb                name of verb(action)\n");
   printf("            -d directory           working directory\n");
-  printf("            -h                     show this message");
+  printf("            -h                     show this message\n");
 }
 
 /*
