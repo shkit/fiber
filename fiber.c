@@ -1,7 +1,7 @@
 /*
  * File Inspect and Broking End Resolver  -- fiber --
  *
- *       Copyright (C) 1997-2010  Shuichi KITAGUCHI <kit@ysnb.net>
+ *       Copyright (C) 1997-2021  Shuichi KITAGUCHI <kit@ysnb.net>
  *
  *
  * This program is free software; you can redistribute it and/or modify
@@ -45,6 +45,8 @@
  *                                 - eliminate "file:" scheme.
  *    18 Jan, 2004 : Version 1.2.3 - DO NOT eliminate "file:" scheme.
  *    03 Nov, 2010 : Version 1.2.4 - add Exif format.
+ *    11 Feb, 2021 : Version 1.3.0 - change registry key HKEY_LOCAL_MACHINE to HKEY_CURRENT_USER
+ *                                 - add "-h" option.
  */
 
 
@@ -55,7 +57,7 @@
 #include <mbstring.h>
 
 
-#define FIBER_VERSION   "1.2.4"
+#define FIBER_VERSION   "1.3.0"
 
 
 /* constants */
@@ -71,6 +73,7 @@
 #define STATE_ADDEXT    2
 
 /* registry keys */
+#define FIBER_HKEY                     HKEY_CURRENT_USER
 #define FIBER_SUBKEY                   "SOFTWARE\\GNU\\Fiber"
 #define FIBER_SUBKEY_EXTNUM            "ExtNum"
 #define FIBER_SUBKEY_EXECUTEUNKNOWNEXT "ExecuteUnknownExt"
@@ -363,7 +366,7 @@ BOOL WriteRegistry( VOID )
   DWORD dwDisposition;
   char  *pt;
 
-  ret = RegCreateKeyEx( HKEY_LOCAL_MACHINE,
+  ret = RegCreateKeyEx( FIBER_HKEY,
 			FIBER_SUBKEY,
 			0,
 			"",
@@ -423,7 +426,7 @@ BOOL InitializeRegistry( VOID )
   int   i;
   char  szBuf[64];
 
-  ret = RegCreateKeyEx( HKEY_LOCAL_MACHINE,
+  ret = RegCreateKeyEx( FIBER_HKEY,
 			FIBER_SUBKEY,
 			0,
 			"",
@@ -496,14 +499,14 @@ BOOL ReadRegistry( VOID )
   BOOL  fRet = TRUE;
   int   i;
 
-  ret = RegOpenKeyEx( HKEY_LOCAL_MACHINE,
+  ret = RegOpenKeyEx( FIBER_HKEY,
 		      FIBER_SUBKEY,
 		      0,
 		      KEY_EXECUTE,
 		      &hKey );
   if ( ret != ERROR_SUCCESS ){
     if ( InitializeRegistry() ){
-      ret = RegOpenKeyEx( HKEY_LOCAL_MACHINE,
+      ret = RegOpenKeyEx( FIBER_HKEY,
 			  FIBER_SUBKEY,
 			  0,
 			  KEY_EXECUTE,
@@ -648,7 +651,7 @@ int SearchExtension( char *ext )
   int i;
 
   for ( i=0; i<iEfs; i++ )
-    if ( strcmpi(ext,ef[i].szExt) == 0 ) break;
+    if ( _strcmpi(ext,ef[i].szExt) == 0 ) break;
 
   if ( i == iEfs )
     return ( INT_MAX );
@@ -740,7 +743,7 @@ BOOL SetOption( LPSTR szOption )
   }
   *pt++ = '\0';
 
-  ret = RegCreateKeyEx( HKEY_LOCAL_MACHINE,
+  ret = RegCreateKeyEx( FIBER_HKEY,
 			FIBER_SUBKEY,
 			0,
 			"",
@@ -832,6 +835,7 @@ VOID PrintUsage( VOID )
   printf("            -n show                ShowWindow parameter \"nCmdShow\"\n");
   printf("            -b verb                name of verb(action)\n");
   printf("            -d directory           working directory\n");
+  printf("            -h                     show this message");
 }
 
 /*
@@ -990,6 +994,10 @@ main( int  argc, char *argv[] )
 	printf("Error: directory name is required with \'-b\' option.\n");
 	fError=TRUE;
       }
+    } else if ( ! strcmp(argv[i], "-h") ) {
+      /* -h */
+      PrintUsage();
+      exit(0);
     } else {
       /* filename */
       if ( strlen(argv[i]) > sizeof(szInputFile) ){
